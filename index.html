@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Blocker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ Sidebar navigation ============ -->
+  <nav id="sidebar">
+    <div class="brand">⏱ Time Blocker</div>
+    <button class="nav-btn active" data-page="dashboard">🏠 Dashboard</button>
+    <button class="nav-btn" data-page="calendar">📅 Calendar</button>
+    <button class="nav-btn" data-page="tasks">📋 Tasks</button>
+    <button class="nav-btn" data-page="statistics">📊 Statistics</button>
+    <button class="nav-btn" data-page="settings">⚙️ Settings</button>
+    <div id="sync-status" class="sync-status"></div>
+  </nav>
+
+  <!-- ============ Main content ============ -->
+  <main id="main-content">
+
+    <section id="page-dashboard" class="page active"></section>
+
+    <section id="page-calendar" class="page">
+      <div class="calendar-toolbar">
+        <div class="cal-nav">
+          <button id="cal-prev" class="icon-btn" title="Previous">←</button>
+          <button id="cal-today" class="btn-secondary">Today</button>
+          <button id="cal-next" class="icon-btn" title="Next">→</button>
+          <span id="calendar-date-label" class="cal-date-label"></span>
+        </div>
+        <div class="cal-actions">
+          <div class="view-switch">
+            <button class="view-btn" data-view="day">Day</button>
+            <button class="view-btn" data-view="week">Week</button>
+            <button class="view-btn" data-view="month">Month</button>
+          </div>
+          <button id="open-create-task" class="btn-primary">+ New Block</button>
+        </div>
+      </div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+    </section>
+
+    <section id="page-tasks" class="page">
+      <h1>📋 Tasks</h1>
+      <form id="quick-add-form" class="quick-add-form">
+        <input id="qa-name" type="text" placeholder="+ Add task…" required>
+        <input id="qa-date" type="date" title="Optional date">
+        <input id="qa-time" type="time" title="Optional start time">
+        <button type="submit" class="btn-primary">Add</button>
+      </form>
+      <h2>Unscheduled</h2>
+      <p class="page-sub">Drag any of these onto the calendar to turn it into a time block.</p>
+      <div id="unscheduled-list"></div>
+    </section>
+
+    <section id="page-statistics" class="page"></section>
+
+    <section id="page-settings" class="page"></section>
+
+  </main>
+</div>
+
+<!-- ============ Task Create / Edit Modal ============ -->
+<div id="task-modal" class="modal hidden">
+  <div class="modal-box">
+    <h2 id="task-modal-title">Create a Time Block</h2>
+    <form id="task-form">
+
+      <label>Task Name
+        <input id="tf-name" type="text" required placeholder="e.g. Study Economics">
+      </label>
+      <label>Description / Notes
+        <textarea id="tf-description" rows="2" placeholder="Optional notes…"></textarea>
+      </label>
+
+      <div class="field-row">
+        <label>Category
+          <select id="tf-category"></select>
+        </label>
+        <label>Status
+          <select id="tf-status">
+            <option value="not-started">⚪ Not started</option>
+            <option value="in-progress">🔵 In progress</option>
+            <option value="completed">🟢 Completed</option>
+            <option value="missed">🔴 Missed</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="checkbox-label">
+        <input id="tf-scheduled" type="checkbox" checked>
+        Add this to the calendar (uncheck to keep it in your Unscheduled list)
+      </label>
+
+      <div id="schedule-fields">
+        <div class="field-row">
+          <label>Date <input id="tf-date" type="date"></label>
+          <label>Start <input id="tf-start" type="time"></label>
+          <label>End <input id="tf-end" type="time"></label>
+          <label>Duration (min) <input id="tf-duration" type="number" min="5" step="5"></label>
+        </div>
+
+        <label class="checkbox-label">
+          <input id="tf-recurrence-enabled" type="checkbox">
+          Repeat this task
+        </label>
+
+        <div id="recurrence-fields" class="hidden">
+          <div class="field-row">
+            <label>Repeats
+              <select id="tf-recurrence-type">
+                <option value="daily">Daily</option>
+                <option value="weekdays">Every weekday</option>
+                <option value="weekly">Weekly (same day)</option>
+                <option value="specific">Specific days</option>
+                <option value="everyXWeeks">Every X weeks</option>
+              </select>
+            </label>
+            <label>Ends on (optional) <input id="tf-recurrence-end" type="date"></label>
+          </div>
+
+          <div id="recurrence-specific-days" class="hidden day-checkboxes">
+            <label><input type="checkbox" class="rec-day-checkbox" value="0"> Sun</label>
+            <label><input type="checkbox" class="rec-day-checkbox" value="1"> Mon</label>
+            <label><input type="checkbox" class="rec-day-checkbox" value="2"> Tue</label>
+            <label><input type="checkbox" class="rec-day-checkbox" value="3"> Wed</label>
+            <label><input type="checkbox" class="rec-day-checkbox" value="4"> Thu</label>
+            <label><input type="checkbox" class="rec-day-checkbox" value="5"> Fri</label>
+            <label><input type="checkbox" class="rec-day-checkbox" value="6"> Sat</label>
+          </div>
+
+          <div id="recurrence-interval-wrap" class="hidden">
+            <label>Every <input id="tf-recurrence-interval" type="number" min="1" style="width:4em"> weeks</label>
+          </div>
+        </div>
+
+        <div id="timer-section" class="timer-box hidden">
+          <span id="timer-planned"></span>
+          <span id="timer-live" class="timer-live">0:00</span>
+          <button type="button" id="tf-timer-toggle" class="btn-secondary">▶ Start</button>
+          <span id="timer-actual" class="timer-actual hidden"></span>
+        </div>
+
+        <div id="reschedule-section" class="reschedule-box hidden">
+          <span>Reschedule:</span>
+          <button type="button" id="tf-reschedule-tomorrow" class="btn-secondary">→ Tomorrow</button>
+          <span class="hint">(or just change the Date/Start/End above and hit Save)</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="tf-delete" class="btn-danger hidden">Delete</button>
+        <div class="spacer"></div>
+        <button type="button" id="tf-cancel" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Conflict Modal ============ -->
+<div id="conflict-modal" class="modal hidden">
+  <div class="modal-box modal-small">
+    <h2>⚠️ Schedule Conflict</h2>
+    <p>You already have:</p>
+    <ul id="conflict-list" class="conflict-list"></ul>
+    <p>Your new block overlaps with the above.</p>
+    <div class="modal-footer">
+      <button type="button" id="conflict-cancel" class="btn-secondary">Cancel</button>
+      <button type="button" id="conflict-adjust" class="btn-secondary">Adjust Time</button>
+      <button type="button" id="conflict-anyway" class="btn-danger">Schedule Anyway</button>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="utils.js"></script>
+<script src="storage.js"></script>
+<script src="state.js"></script>
+<script src="recurrence.js"></script>
+<script src="calendar.js"></script>
+<script src="tasks.js"></script>
+<script src="timer.js"></script>
+<script src="stats.js"></script>
+<script src="modals.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
