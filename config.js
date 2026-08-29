@@ -53,10 +53,10 @@
 
 const JSONBIN_CONFIG = {
   // Paste your Bin ID between the quotes below:
-  BIN_ID: "PASTE_YOUR_BIN_ID_HERE",
+  BIN_ID: "6a924848da38895dfe1ec359",
 
   // Paste your scoped X-Access-Key (NOT the Master Key) between the quotes below:
-  ACCESS_KEY: "PASTE_YOUR_X-ACCESS-KEY_HERE",
+  ACCESS_KEY: "$2a$10$3gGri8xlWMFavz4rrsCPFeUVsLo.iRFQ/7ooBrDLiAGgQqtQGVAnG",
 
   // You shouldn't need to change this:
   BASE_URL: "https://api.jsonbin.io/v3/b",
