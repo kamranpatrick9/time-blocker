@@ -152,17 +152,18 @@ function renderCategoryList() {
     `;
     row.querySelector(".cat-del").addEventListener("click", () => {
       if (state.categories.length <= 1) {
-        alert("You need at least one category.");
+        showAlert("You need at least one category.");
         return;
       }
       const fallback = state.categories.find((c) => c.id !== cat.id);
-      if (!confirm(`Delete category "${cat.name}"? Its tasks will move to "${fallback.name}".`)) return;
-      updateState((s) => {
-        s.tasks.forEach((t) => {
-          if (t.category === cat.id) t.category = fallback.id;
+      showConfirm(`Delete category "${cat.name}"? Its tasks will move to "${fallback.name}".`, () => {
+        updateState((s) => {
+          s.tasks.forEach((t) => {
+            if (t.category === cat.id) t.category = fallback.id;
+          });
+          s.categories = s.categories.filter((c) => c.id !== cat.id);
         });
-        s.categories = s.categories.filter((c) => c.id !== cat.id);
-      });
+      }, "Delete");
     });
     container.appendChild(row);
   });

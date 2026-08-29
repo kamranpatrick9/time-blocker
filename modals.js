@@ -6,6 +6,20 @@
    defined in index.html, and writes values INTO them — it
    doesn't create the fields itself (that keeps index.html easy
    to read and tweak).
+
+   WHY showChoice()/showConfirm()/showAlert() INSTEAD OF THE
+   BROWSER'S BUILT-IN confirm()/alert()?
+   Those built-ins pop up a native OS dialog. Browsers are
+   allowed to (and increasingly do) silently block them inside
+   an iframe that doesn't explicitly grant "allow-modals" — VS
+   Code's internal preview panel is one common example, and a
+   Notion embed is another, since Notion doesn't want a random
+   embedded page freezing its whole app with a native popup. When
+   that happens confirm() just returns immediately without ever
+   showing anything, which looks exactly like "my delete button
+   silently does nothing." Since this app is explicitly meant to
+   live inside a Notion embed, we roll our own small popup instead
+   — it's just a styled <div>, so nothing can block it.
    ============================================================ */
 
 let _modalContext = null; // { mode: 'create'|'edit', occurrenceKey, taskId }
@@ -190,11 +204,11 @@ function handleTaskFormSave() {
   };
 
   if (!payload.name) {
-    alert("Please give this task a name.");
+    showAlert("Please give this task a name.");
     return;
   }
   if (scheduled && timeToMinutes(payload.endTime) <= timeToMinutes(payload.startTime)) {
-    alert("End time must be after start time.");
+    showAlert("End time must be after start time.");
     return;
   }
 
@@ -217,22 +231,71 @@ function handleTaskFormSave() {
 
 function handleTaskFormDelete() {
   const taskId = _modalContext.taskId;
+  const occurrenceKey = _modalContext.occurrenceKey;
   const task = getTaskById(taskId);
   if (!task) return;
+
   if (task.recurrence) {
-    const wholeSeries = confirm(
-      'Click OK to delete the WHOLE recurring series ("' + task.name + '").\nClick Cancel to delete just this one occurrence.'
-    );
-    if (wholeSeries) deleteTask(taskId);
-    else if (_modalContext.occurrenceKey) deleteOccurrence(_modalContext.occurrenceKey);
+    showChoice(`"${task.name}" is a repeating task. What would you like to delete?`, [
+      { label: "Cancel", className: "btn-secondary" },
+      {
+        label: "Just this occurrence",
+        className: "btn-secondary",
+        onClick: () => {
+          if (occurrenceKey) deleteOccurrence(occurrenceKey);
+          closeModal("task-modal");
+        },
+      },
+      {
+        label: "Whole series",
+        className: "btn-danger",
+        onClick: () => {
+          deleteTask(taskId);
+          closeModal("task-modal");
+        },
+      },
+    ]);
   } else {
-    if (confirm(`Delete "${task.name}"?`)) deleteTask(taskId);
+    showConfirm(`Delete "${task.name}"?`, () => {
+      deleteTask(taskId);
+      closeModal("task-modal");
+    }, "Delete");
   }
-  closeModal("task-modal");
 }
 
 function closeModal(id) {
   document.getElementById(id).classList.add("hidden");
+}
+
+/* ---------------- Generic choice/confirm/alert popup ---------------- */
+
+function showChoice(message, buttons) {
+  document.getElementById("choice-message").textContent = message;
+  const wrap = document.getElementById("choice-buttons");
+  wrap.innerHTML = "";
+  buttons.forEach((b) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = b.className || "btn-secondary";
+    btn.textContent = b.label;
+    btn.addEventListener("click", () => {
+      closeModal("choice-modal");
+      if (b.onClick) b.onClick();
+    });
+    wrap.appendChild(btn);
+  });
+  document.getElementById("choice-modal").classList.remove("hidden");
+}
+
+function showAlert(message) {
+  showChoice(message, [{ label: "OK", className: "btn-primary" }]);
+}
+
+function showConfirm(message, onConfirm, confirmLabel = "OK") {
+  showChoice(message, [
+    { label: "Cancel", className: "btn-secondary" },
+    { label: confirmLabel, className: "btn-danger", onClick: onConfirm },
+  ]);
 }
 
 let _conflictCallbacks = null;

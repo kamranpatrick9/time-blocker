@@ -179,6 +179,17 @@
   </div>
 </div>
 
+<!-- ============ Generic Confirm/Alert/Choice Modal ============
+     Used instead of the browser's built-in confirm()/alert(), which
+     get silently blocked inside sandboxed iframes (like VS Code's
+     internal preview, or a Notion embed) — see modals.js for why. -->
+<div id="choice-modal" class="modal hidden">
+  <div class="modal-box modal-small">
+    <p id="choice-message"></p>
+    <div class="modal-footer" id="choice-buttons"></div>
+  </div>
+</div>
+
 <script src="config.js"></script>
 <script src="utils.js"></script>
 <script src="storage.js"></script>

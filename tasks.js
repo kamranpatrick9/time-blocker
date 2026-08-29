@@ -67,7 +67,7 @@ function renderUnscheduledList() {
     });
     item.querySelector(".ut-edit").addEventListener("click", () => openTaskModal("edit", taskToPseudoOccurrence(t)));
     item.querySelector(".ut-del").addEventListener("click", () => {
-      if (confirm(`Delete "${t.name}"?`)) deleteTask(t.id);
+      showConfirm(`Delete "${t.name}"?`, () => deleteTask(t.id), "Delete");
     });
     container.appendChild(item);
   });
